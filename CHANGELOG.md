@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-25
+
 ### Added
 
 - A _Mullvad VPN_ device: whether the traffic of Gladys goes out through Mullvad, whether the exit IP is on a
@@ -20,3 +22,6 @@ the notes of the version's GitHub Release.
 - A dashboard widget: yes/no, exit place, server or provider, blacklists, last check, a check button; the public IP
   on request.
 - English, French, German and Spanish.
+
+[Unreleased]: https://github.com/guim31/gladys-mullvad/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-mullvad/releases/tag/v1.0.0
