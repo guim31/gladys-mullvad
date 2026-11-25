@@ -1,177 +1,439 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Mullvad VPN",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Check that your home connection really goes out through the Mullvad VPN.",
+    "fr": "Vérifiez que la connexion de la maison sort bien par le VPN Mullvad.",
+    "de": "Prüfe, ob die Verbindung deines Zuhauses wirklich über das Mullvad-VPN läuft.",
+    "es": "Compruebe que la conexión de la casa sale realmente por la VPN de Mullvad."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-mullvad:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-mullvad/main/cover.png",
+  "categories": ["network"],
+  "transports": ["cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "How it works",
+        "fr": "Fonctionnement",
+        "de": "Funktionsweise",
+        "es": "Funcionamiento"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Every few minutes the integration asks Mullvad's public connection check (am.i.mullvad.net, no account needed) how it sees the traffic of Gladys: through a Mullvad server or not, exit country, blacklists. Only Gladys' own traffic is checked.",
+        "fr": "Toutes les quelques minutes, l'intégration demande au test de connexion public de Mullvad (am.i.mullvad.net, sans compte) comment il voit le trafic de Gladys : par un serveur Mullvad ou non, pays de sortie, listes noires. Seul le trafic de Gladys est vérifié.",
+        "de": "Alle paar Minuten fragt die Integration den öffentlichen Verbindungstest von Mullvad (am.i.mullvad.net, ohne Konto), wie er den Verkehr von Gladys sieht: über einen Mullvad-Server oder nicht, Ausgangsland, Sperrlisten. Geprüft wird nur der Verkehr von Gladys.",
+        "es": "Cada pocos minutos, la integración pregunta a la prueba de conexión pública de Mullvad (am.i.mullvad.net, sin cuenta) cómo ve el tráfico de Gladys: por un servidor Mullvad o no, país de salida, listas negras. Solo se comprueba el tráfico de Gladys."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://mullvad.net/en/check",
+          "label": {
+            "en": "Mullvad connection check",
+            "fr": "Test de connexion Mullvad",
+            "de": "Mullvad-Verbindungstest",
+            "es": "Prueba de conexión de Mullvad"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "check_interval",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Check interval",
+        "fr": "Intervalle de vérification",
+        "de": "Prüfintervall",
+        "es": "Intervalo de comprobación"
+      },
+      "description": {
+        "en": "Time between two checks. One small request each time.",
+        "fr": "Temps entre deux vérifications. Une petite requête à chaque fois.",
+        "de": "Zeit zwischen zwei Prüfungen. Jedes Mal eine kleine Anfrage.",
+        "es": "Tiempo entre dos comprobaciones. Una pequeña petición cada vez."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "5",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "1",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "en": "2 minutes",
+            "fr": "2 minutes",
+            "de": "2 Minuten",
+            "es": "2 minutos"
+          }
+        },
+        {
+          "value": "5",
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
+        },
+        {
+          "value": "10",
+          "label": {
+            "en": "10 minutes",
+            "fr": "10 minutes",
+            "de": "10 Minuten",
+            "es": "10 minutos"
+          }
+        },
+        {
+          "value": "15",
+          "label": {
+            "en": "15 minutes",
+            "fr": "15 minutes",
+            "de": "15 Minuten",
+            "es": "15 minutos"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "30 minutes",
+            "fr": "30 minutes",
+            "de": "30 Minuten",
+            "es": "30 minutos"
+          }
+        },
+        {
+          "value": "60",
+          "label": {
+            "en": "1 hour",
+            "fr": "1 heure",
+            "de": "1 Stunde",
+            "es": "1 hora"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de funciones"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Used for the feature names (set when the device is added) and the messages.",
+        "fr": "Utilisée pour les noms de fonctionnalités (fixés à l'ajout de l'appareil) et les messages.",
+        "de": "Für die Funktionsnamen (beim Hinzufügen des Geräts festgelegt) und die Meldungen.",
+        "es": "Se usa para los nombres de funciones (fijados al añadir el dispositivo) y los mensajes."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "check_now",
+      "label": {
+        "en": "Check the connection now",
+        "fr": "Vérifier la connexion maintenant",
+        "de": "Verbindung jetzt prüfen",
+        "es": "Comprobar la conexión ahora"
+      },
       "timeout_seconds": 30
-    },
+    }
+  ],
+  "widgets": [
     {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
+      "key": "connection",
+      "label": {
+        "en": "Mullvad VPN",
+        "fr": "Mullvad VPN",
+        "de": "Mullvad VPN",
+        "es": "Mullvad VPN"
+      },
+      "description": {
+        "en": "Whether the house goes out through Mullvad, the exit, the blacklists and a check button.",
+        "fr": "Si la maison sort par Mullvad, la sortie, les listes noires et un bouton de vérification.",
+        "de": "Ob das Zuhause über Mullvad rausgeht, der Ausgang, Sperrlisten und ein Prüfknopf.",
+        "es": "Si la casa sale por Mullvad, la salida, las listas negras y un botón de comprobación."
+      },
+      "icon": "shield",
+      "settings": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "key": "show_server",
+          "type": "boolean",
+          "label": {
+            "en": "Show the server or provider",
+            "fr": "Afficher le serveur ou le fournisseur",
+            "de": "Server oder Anbieter anzeigen",
+            "es": "Mostrar el servidor o el proveedor"
+          },
+          "description": {
+            "en": "The Mullvad server in use, or the provider when not through Mullvad.",
+            "fr": "Le serveur Mullvad utilisé, ou le fournisseur hors Mullvad.",
+            "de": "Der genutzte Mullvad-Server oder der Anbieter ohne Mullvad.",
+            "es": "El servidor Mullvad usado, o el proveedor fuera de Mullvad."
+          },
+          "required": false,
+          "default": true
+        },
+        {
+          "key": "show_ip",
+          "type": "boolean",
+          "label": {
+            "en": "Show the public IP",
+            "fr": "Afficher l'IP publique",
+            "de": "Öffentliche IP anzeigen",
+            "es": "Mostrar la IP pública"
+          },
+          "description": {
+            "en": "Off by default: anyone looking at the dashboard would see it.",
+            "fr": "Désactivé par défaut : toute personne voyant le tableau de bord la verrait.",
+            "de": "Standardmäßig aus: Jeder, der das Dashboard sieht, würde sie sehen.",
+            "es": "Desactivado por defecto: cualquiera que vea el panel la vería."
+          },
+          "required": false,
+          "default": false
+        },
+        {
+          "key": "show_button",
+          "type": "boolean",
+          "label": {
+            "en": "Show the \"Check now\" button",
+            "fr": "Afficher le bouton « Vérifier »",
+            "de": "Schaltfläche „Jetzt prüfen“ anzeigen",
+            "es": "Mostrar el botón «Comprobar»"
+          },
+          "description": {
+            "en": "A button that checks the connection at once.",
+            "fr": "Un bouton qui vérifie la connexion tout de suite.",
+            "de": "Eine Schaltfläche, die die Verbindung sofort prüft.",
+            "es": "Un botón que comprueba la conexión enseguida."
+          },
+          "required": false,
+          "default": true
         }
-      ]
+      ],
+      "action_timeout_seconds": 30
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
-      "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+      "key": "mullvad_lost",
+      "label": {
+        "en": "Connection no longer goes through Mullvad",
+        "fr": "La connexion ne passe plus par Mullvad",
+        "de": "Verbindung läuft nicht mehr über Mullvad",
+        "es": "La conexión ya no pasa por Mullvad"
       },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
-        }
-      ],
+      "description": {
+        "en": "A check sees Gladys' traffic leave outside Mullvad, after it went through it.",
+        "fr": "Une vérification voit le trafic de Gladys sortir hors de Mullvad, alors qu'il passait par lui.",
+        "de": "Eine Prüfung sieht den Verkehr von Gladys außerhalb von Mullvad, nachdem er darüber lief.",
+        "es": "Una comprobación ve el tráfico de Gladys salir fuera de Mullvad, cuando antes pasaba por él."
+      },
+      "fields": [],
       "variables": [
         {
-          "key": "target",
+          "key": "country",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Exit country",
+            "fr": "Pays de sortie",
+            "de": "Ausgangsland",
+            "es": "País de salida"
+          }
+        }
+      ]
+    },
+    {
+      "key": "mullvad_restored",
+      "label": {
+        "en": "Connection goes through Mullvad again",
+        "fr": "La connexion repasse par Mullvad",
+        "de": "Verbindung läuft wieder über Mullvad",
+        "es": "La conexión vuelve a pasar por Mullvad"
+      },
+      "description": {
+        "en": "A check sees Gladys' traffic go through a Mullvad server again.",
+        "fr": "Une vérification voit de nouveau le trafic de Gladys passer par un serveur Mullvad.",
+        "de": "Eine Prüfung sieht den Verkehr von Gladys wieder über einen Mullvad-Server.",
+        "es": "Una comprobación ve de nuevo el tráfico de Gladys pasar por un servidor Mullvad."
+      },
+      "fields": [],
+      "variables": [
+        {
+          "key": "country",
+          "type": "string",
+          "label": {
+            "en": "Exit country",
+            "fr": "Pays de sortie",
+            "de": "Ausgangsland",
+            "es": "País de salida"
+          }
+        },
+        {
+          "key": "server",
+          "type": "string",
+          "label": {
+            "en": "Mullvad server",
+            "fr": "Serveur Mullvad",
+            "de": "Mullvad-Server",
+            "es": "Servidor Mullvad"
+          }
+        }
+      ]
+    },
+    {
+      "key": "check_failed",
+      "label": {
+        "en": "Mullvad check unreachable",
+        "fr": "Vérification Mullvad injoignable",
+        "de": "Mullvad-Prüfung nicht erreichbar",
+        "es": "Comprobación de Mullvad inaccesible"
+      },
+      "description": {
+        "en": "Two checks in a row failed: Internet down, or a kill switch blocking traffic.",
+        "fr": "Deux vérifications de suite ont échoué : Internet coupé, ou un kill switch qui bloque le trafic.",
+        "de": "Zwei Prüfungen hintereinander sind gescheitert: Internet weg oder ein Kill Switch blockiert.",
+        "es": "Dos comprobaciones seguidas fallaron: Internet caído o un kill switch que bloquea el tráfico."
+      },
+      "fields": [],
+      "variables": [
+        {
+          "key": "error",
+          "type": "string",
+          "label": {
+            "en": "Error",
+            "fr": "Erreur",
+            "de": "Fehler",
+            "es": "Error"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "check_connection",
+      "label": {
+        "en": "Check the Mullvad connection",
+        "fr": "Vérifier la connexion Mullvad",
+        "de": "Mullvad-Verbindung prüfen",
+        "es": "Comprobar la conexión Mullvad"
       },
-      "timeout_seconds": 15,
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ],
+      "description": {
+        "en": "Checks now and gives the result to the next actions.",
+        "fr": "Vérifie tout de suite et donne le résultat aux actions suivantes.",
+        "de": "Prüft sofort und gibt das Ergebnis an die nächsten Aktionen weiter.",
+        "es": "Comprueba enseguida y pasa el resultado a las acciones siguientes."
+      },
+      "timeout_seconds": 30,
+      "fields": [],
       "outputs": [
         {
-          "key": "signalled",
+          "key": "success",
           "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "label": {
+            "en": "Check succeeded",
+            "fr": "Vérification réussie",
+            "de": "Prüfung erfolgreich",
+            "es": "Comprobación correcta"
+          }
+        },
+        {
+          "key": "through_mullvad",
+          "type": "boolean",
+          "label": {
+            "en": "Through Mullvad",
+            "fr": "Via Mullvad",
+            "de": "Über Mullvad",
+            "es": "A través de Mullvad"
+          }
+        },
+        {
+          "key": "country",
+          "type": "string",
+          "label": {
+            "en": "Exit country",
+            "fr": "Pays de sortie",
+            "de": "Ausgangsland",
+            "es": "País de salida"
+          }
+        },
+        {
+          "key": "server",
+          "type": "string",
+          "label": {
+            "en": "Mullvad server",
+            "fr": "Serveur Mullvad",
+            "de": "Mullvad-Server",
+            "es": "Servidor Mullvad"
+          }
+        },
+        {
+          "key": "blacklisted",
+          "type": "boolean",
+          "label": {
+            "en": "IP blacklisted",
+            "fr": "IP sur liste noire",
+            "de": "IP auf Sperrliste",
+            "es": "IP en lista negra"
+          }
         }
       ]
-    }
-  ],
-  "widgets": [
-    {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
-      },
-      "icon": "activity",
-      "action_timeout_seconds": 15
     }
   ]
 }

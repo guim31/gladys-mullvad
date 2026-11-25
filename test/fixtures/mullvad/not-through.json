@@ -1,0 +1,10 @@
+{
+  "ip": "198.51.100.42",
+  "country": "France",
+  "city": null,
+  "longitude": 2.3387,
+  "latitude": 48.8582,
+  "mullvad_exit_ip": false,
+  "blacklisted": { "blacklisted": false, "results": [] },
+  "organization": "Example Telecom"
+}

@@ -1,67 +1,86 @@
-# Template de démonstration
+# Mullvad VPN
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Vérifie que la connexion Internet de la maison sort bien par le [VPN Mullvad](https://mullvad.net/), comme le test de
+connexion du site de Mullvad, et prévient vos scènes quand ce n'est plus le cas. Développée sans tunnel Mullvad du côté
+du développeur : vos retours sont les bienvenus.
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+Un appareil **Mullvad VPN** avec trois fonctionnalités en lecture seule :
+
+- **Via Mullvad** : 1 quand le trafic de Gladys sort sur Internet par un serveur Mullvad, 0 sinon.
+- **IP sur liste noire** : 1 quand l'IP de sortie figure sur une liste noire connue de Mullvad (listes anti-spam…).
+- **Pays de sortie** : le pays d'où Internet voit arriver votre trafic.
+
+L'IP publique et le serveur Mullvad ne sont volontairement **pas** des fonctionnalités, pour ne jamais être gardés dans
+l'historique : ils s'affichent dans le widget (l'IP seulement sur demande) et dans le message du bouton **Vérifier la
+connexion maintenant**.
+
+## Fonctionnement
+
+Toutes les quelques minutes, l'intégration interroge `https://am.i.mullvad.net/json`, le test de connexion public de
+Mullvad (sans compte ni clé). Seul **le trafic de Gladys** est vérifié : il dit si la maison sort par Mullvad quand le
+VPN tourne sur la box, le routeur ou la machine qui héberge Gladys, pas si un autre ordinateur de la maison l'utilise.
+
+## Installation
+
+Dans Gladys, allez dans **Intégrations → Installer depuis GitHub** et saisissez
+`https://github.com/guim31/gladys-mullvad`. Ouvrez ensuite l'onglet **Découverte** de l'intégration et ajoutez
+l'appareil **Mullvad VPN**.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+- **Intervalle de vérification** : de 1 à 60 minutes, 5 par défaut. Une petite requête à chaque fois.
+- **Langue des noms de fonctionnalités** : la langue des noms de fonctionnalités (figés à l'ajout de l'appareil) et
+  des messages. Français par défaut.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+## Widget du tableau de bord
 
-## Actions
+Le widget **Mullvad VPN** montre d'un coup d'œil : un « Oui » vert ou un « Non » rouge, le lieu de sortie, le serveur
+Mullvad utilisé (ou votre fournisseur hors Mullvad), les listes noires et l'heure de la dernière vérification. Ses
+réglages :
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+- **Afficher le serveur ou le fournisseur** (activé par défaut) ;
+- **Afficher l'IP publique** (désactivé par défaut : toute personne voyant le tableau de bord la verrait) ;
+- **Afficher le bouton « Vérifier »** (activé par défaut).
 
 ## Scènes
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+Déclencheurs :
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+- **La connexion ne passe plus par Mullvad** : une vérification voit le trafic sortir hors de Mullvad, alors qu'il
+  passait par lui. Variable : pays de sortie.
+- **La connexion repasse par Mullvad** : variables : pays de sortie, serveur Mullvad.
+- **Vérification Mullvad injoignable** : deux vérifications de suite ont échoué. Souvent une coupure d'Internet, ou un
+  kill switch qui bloque le trafic pendant que le tunnel est tombé. Variable : erreur. Une seule fois par coupure.
 
-## Tableau de bord
+Action : **Vérifier la connexion Mullvad** vérifie tout de suite et donne `success`, `through_mullvad`, `country`,
+`server` et `blacklisted` aux actions suivantes. Quand la vérification ne peut pas se faire, `success` vaut faux :
+testez-le d'abord.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+La première vérification après un démarrage ne déclenche jamais rien (il n'y a rien à comparer).
+
+## Vérifier la connexion maintenant
+
+Dans l'écran Configuration de l'intégration, le bouton **Vérifier la connexion maintenant** vérifie tout de suite et
+affiche le résultat : par Mullvad ou non, serveur, lieu de sortie, fournisseur, IP publique et listes noires. Il
+s'affiche en rouge quand am.i.mullvad.net est injoignable.
+
+## Limites et vie privée
+
+- Seul le trafic du conteneur de l'intégration Gladys est vérifié (voir « Fonctionnement »).
+- Tant que la vérification échoue, les fonctionnalités gardent leur dernière valeur connue : un échec ne dit rien du
+  tunnel.
+- am.i.mullvad.net est un service public et gratuit de Mullvad, sans quota publié : gardez un intervalle raisonnable
+  (une requête toutes les 5 minutes par défaut). Mullvad voit la requête, comme pour toute visite de son site.
+- Rien n'est écrit sur le disque, et l'IP publique n'est jamais écrite dans les logs.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- « am.i.mullvad.net est injoignable » : vérifiez la connexion Internet de Gladys, ou votre kill switch.
+- Noms de fonctionnalités dans la mauvaise langue : changez la langue, puis supprimez et ajoutez de nouveau l'appareil
+  (les noms sont figés à la création).
+- Plus de détails avec `LOG_LEVEL=debug`. Signalez les problèmes sur
+  [GitHub](https://github.com/guim31/gladys-mullvad/issues).
+
+Cette intégration n'est pas affiliée à Mullvad VPN AB.

@@ -1,0 +1,17 @@
+{
+  "ip": "192.0.2.23",
+  "country": "Sweden",
+  "city": "Stockholm",
+  "longitude": 18.0717,
+  "latitude": 59.3326,
+  "mullvad_exit_ip": true,
+  "mullvad_exit_ip_hostname": "se-sto-wg-001",
+  "mullvad_server_type": "WireGuard",
+  "blacklisted": {
+    "blacklisted": false,
+    "results": [
+      { "name": "spamhaus.org", "link": "https://check.spamhaus.org/", "blacklisted": false }
+    ]
+  },
+  "organization": "M247"
+}
