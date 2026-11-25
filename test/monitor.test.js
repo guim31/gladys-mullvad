@@ -132,3 +132,61 @@ test('the features are read-only', async (t) => {
   const ack = await w.fake.setValue(device, device.features[0], 1);
   assert.equal(ack.success, false);
 });
+
+test('a refused publication costs neither the trigger nor the check', async (t) => {
+  const w = await createWorld();
+  t.after(() => w.app.stop());
+  t.mock.method(w.gladys, 'publishChangedStates', async () => {
+    throw new Error('429 Too Many Requests');
+  });
+  w.service.answer = FIXTURES.notThrough;
+  const status = await w.monitor.check();
+  assert.equal(status.through, false);
+  assert.equal(fired(w, TRIGGERS.LOST).length, 1);
+});
+
+test('a refused status is sent again at the next check', async (t) => {
+  const w = await createWorld({ service: createService('down'), connect: false });
+  t.after(() => w.app.stop());
+  const original = w.gladys.setConnectionStatus.bind(w.gladys);
+  let refuse = true;
+  t.mock.method(w.gladys, 'setConnectionStatus', async (...args) => {
+    if (refuse) {
+      throw new Error('Gladys restarting');
+    }
+    return original(...args);
+  });
+  await w.gladys.connect();
+  await w.app.ready;
+  w.service.answer = FIXTURES.through;
+  await w.monitor.check();
+  refuse = false;
+  await w.monitor.check();
+  assert.equal(w.fake.connectionStatus.connected, true);
+});
+
+test('a refused device publication after a reconnection keeps the timer', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const w = await createWorld({ timers: true });
+  t.after(() => w.app.stop());
+  await w.gladys.disconnect();
+  t.mock.method(w.gladys, 'publishDiscoveredDevices', async () => {
+    throw new Error('Gladys not ready');
+  });
+  await w.gladys.connect();
+  const before = w.service.requests.length;
+  t.mock.timers.tick(5 * 60_000);
+  for (let i = 0; i < 20; i += 1) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  assert.equal(w.service.requests.length, before + 1);
+});
+
+test('a check works before any configuration was read (defaults)', async (t) => {
+  const w = await createWorld({ connect: false });
+  t.after(() => w.app.stop());
+  const status = await w.monitor.check();
+  assert.equal(status.through, true);
+  await w.monitor.publishDevice();
+  assert.equal(w.fake.discoveredDevices[0].features[0].name, 'Via Mullvad');
+});

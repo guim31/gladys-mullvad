@@ -68,7 +68,9 @@ function timeOf(at, language) {
 
 export function buildContent(monitor, { settings, language = 'en' } = {}) {
   const options = widgetSettings(settings);
-  const { status, error } = monitor;
+  const { status } = monitor;
+  // A single failure is retried 30 s later: only an outage is shown.
+  const error = monitor.failures >= 2 ? monitor.error : null;
   const button = options.show_button
     ? [
         {
@@ -169,11 +171,12 @@ export function buildContent(monitor, { settings, language = 'en' } = {}) {
 export const WIDGETS = {
   [WIDGET_KEY]: {
     get: (monitor, request) => buildContent(monitor, request),
-    async action(monitor, actionKey) {
+    async action(monitor, actionKey, settings) {
       if (actionKey !== WIDGET_ACTION.CHECK) {
         throw new Error(`Unknown widget action "${actionKey}"`);
       }
-      return checkNow(monitor);
+      // The toast is seen by whoever stands at the dashboard: same rule as the widget.
+      return checkNow(monitor, { ip: widgetSettings(settings).show_ip });
     },
   },
 };

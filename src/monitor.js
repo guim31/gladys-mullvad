@@ -12,7 +12,7 @@
 // -----------------------------------------------------------------------------
 
 import { createLogger } from '@gladysassistant/integration-sdk';
-import { intervalMs } from './config.js';
+import { DEFAULT_CONFIG, intervalMs } from './config.js';
 import { buildDevice, ids, statesOf } from './devices.js';
 import { checkConnection } from './mullvad.js';
 import { ERROR_TEXT, pick } from './texts.js';
@@ -45,7 +45,9 @@ export class Monitor {
     this.fetch = fetchImpl;
     this.now = now;
     this.timers = timers;
-    this.config = null;
+    this.config = { ...DEFAULT_CONFIG };
+    /** Whether Gladys shows the integration connected (true once accepted). */
+    this.statusShown = null;
     /** Last successful answer (parsed), with `at` (ms). */
     this.status = null;
     /** Last failure: { kind, at }, null once a check works again. */
@@ -60,7 +62,7 @@ export class Monitor {
     this.config = config;
     this.stopped = false;
     logger.info(`Checking the connection every ${config.check_interval} min`);
-    await this.publishDevice();
+    await this.publishDeviceSafely();
     await this.check();
   }
 
@@ -69,7 +71,8 @@ export class Monitor {
     this.config = config;
     this.stopped = false;
     this.gladys.forgetPublishedStates?.();
-    await this.publishDevice();
+    this.statusShown = null;
+    await this.publishDeviceSafely();
     await this.check();
   }
 
@@ -93,6 +96,15 @@ export class Monitor {
     return this.gladys.publishDiscoveredDevices([buildDevice(this.gladys, this.config.language)]);
   }
 
+  /** A refused publication must not leave the integration without a timer. */
+  async publishDeviceSafely() {
+    try {
+      await this.publishDevice();
+    } catch (err) {
+      logger.error(`Device publication failed: ${err.message}`);
+    }
+  }
+
   schedule(delay) {
     clearTimeout(this.timer);
     this.timer = null;
@@ -101,7 +113,12 @@ export class Monitor {
     }
     this.timer = setTimeout(() => {
       this.timer = null;
-      this.check().catch((err) => logger.error('Check loop failed', err));
+      this.check().catch((err) => {
+        // A CheckError is already reported by onFailure.
+        if (!err.kind && !this.stopped) {
+          logger.error('Check loop failed', err);
+        }
+      });
     }, delay);
     this.timer.unref?.();
   }
@@ -154,16 +171,15 @@ export class Monitor {
     if (wasDown) {
       logger.info('am.i.mullvad.net answers again');
     }
-    if (!previous || wasDown) {
-      await this.gladys.setConnectionStatus(true).catch((err) => {
-        logger.debug(`Connection status refused: ${err.message}`);
-      });
-    }
+    await this.showStatus(true);
     // Never log the IP: only whether the traffic goes through Mullvad.
     logger.debug(`Check done: through Mullvad = ${status.through}`);
-    await this.gladys.publishChangedStates(statesOf(this.gladys, status), {
-      heartbeat: HEARTBEAT_MS,
-    });
+    // A refused publication (rate limit, Gladys restarting) is retried by the
+    // next check (the SDK re-sends what Gladys did not accept); it must not
+    // cost the trigger nor turn a successful check into a failure.
+    await this.gladys
+      .publishChangedStates(statesOf(this.gladys, status), { heartbeat: HEARTBEAT_MS })
+      .catch((err) => logger.debug(`States refused: ${err.message}`));
     if (previous && previous.through !== status.through) {
       logger.info(
         status.through
@@ -192,11 +208,24 @@ export class Monitor {
     // Second failure in a row: an outage, said once.
     logger.error(`Connection check failed: ${err.message}`);
     const text = ERROR_TEXT[this.error.kind] ?? ERROR_TEXT.network;
-    await this.gladys.setConnectionStatus(false, text).catch((error) => {
-      logger.debug(`Connection status refused: ${error.message}`);
-    });
+    await this.showStatus(false, text);
     await this.fire(TRIGGERS.FAILED, { error: pick(text, this.config?.language) });
     this.refreshWidget();
+  }
+
+  /** Report the status to Gladys when it changes; retried until accepted. */
+  async showStatus(connected, text) {
+    if (this.statusShown === connected) {
+      return;
+    }
+    try {
+      await (connected
+        ? this.gladys.setConnectionStatus(true)
+        : this.gladys.setConnectionStatus(false, text));
+      this.statusShown = connected;
+    } catch (err) {
+      logger.debug(`Connection status refused: ${err.message}`);
+    }
   }
 
   async fire(key, data) {

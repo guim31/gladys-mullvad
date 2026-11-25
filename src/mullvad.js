@@ -76,13 +76,19 @@ export async function checkConnection(fetchImpl = fetch) {
   if (!response.ok) {
     throw new CheckError(ERROR_KINDS.HTTP, `HTTP ${response.status}`);
   }
-  let body;
+  let raw;
   try {
-    body = JSON.parse(await response.text());
+    raw = await response.text();
   } catch (err) {
     if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
       throw new CheckError(ERROR_KINDS.TIMEOUT, `no answer within ${TIMEOUT_MS / 1000} s`);
     }
+    throw new CheckError(ERROR_KINDS.NETWORK, err?.cause?.code ?? err?.message ?? 'read failed');
+  }
+  let body;
+  try {
+    body = JSON.parse(raw);
+  } catch {
     throw new CheckError(ERROR_KINDS.INVALID, 'answer is not JSON');
   }
   return parseAnswer(body);

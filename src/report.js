@@ -12,13 +12,19 @@ export function placeOf(status, language) {
   return parts.length > 0 ? parts.join(', ') : pick(REPORT_TEXT.unknown, language);
 }
 
-/** The `{ en, fr, de, es }` report of a parsed answer. */
-export function report(status) {
+const fit = (text, max) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
+
+/**
+ * The `{ en, fr, de, es }` report of a parsed answer, under the 200
+ * characters of a Gladys toast. `ip: false` leaves the public IP out (the
+ * widget button, when the widget hides it).
+ */
+export function report(status, { ip = true } = {}) {
   return Object.fromEntries(
     LANGUAGES.map((lang) => {
       const listed = status.blacklisted
         ? format(REPORT_TEXT.listed, {
-            lists: status.lists.join(', ') || REPORT_TEXT.unknown[lang],
+            lists: fit(status.lists.join(', '), 30) || REPORT_TEXT.unknown[lang],
           })[lang]
         : REPORT_TEXT.clean[lang];
       const template = status.through ? REPORT_TEXT.through : REPORT_TEXT.notThrough;
@@ -26,10 +32,10 @@ export function report(status) {
       return [
         lang,
         format(template, {
-          server: server || REPORT_TEXT.unknown[lang],
-          place: placeOf(status, lang),
-          organization: status.organization ?? REPORT_TEXT.unknown[lang],
-          ip: status.ip,
+          server: fit(server || REPORT_TEXT.unknown[lang], 40),
+          place: fit(placeOf(status, lang), 30),
+          organization: fit(status.organization ?? REPORT_TEXT.unknown[lang], 24),
+          ip: ip ? ` IP ${status.ip}.` : '',
           listed,
         })[lang],
       ];
@@ -38,7 +44,7 @@ export function report(status) {
 }
 
 /** Run a check for a user; resolve with the report or throw an ActionFailure. */
-export async function checkNow(monitor) {
+export async function checkNow(monitor, options) {
   let status;
   try {
     status = await monitor.check();
@@ -50,5 +56,5 @@ export async function checkNow(monitor) {
       ),
     );
   }
-  return report(status);
+  return report(status, options);
 }

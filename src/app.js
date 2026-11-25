@@ -126,9 +126,9 @@ export function registerHandlers(gladys, options = {}) {
   );
   gladys.onWidgetAction(
     WIDGET_KEY,
-    whenReady((actionKey) => {
+    whenReady((actionKey, params, { settings } = {}) => {
       logger.info('Check requested from the dashboard widget');
-      return widget.action(monitor, actionKey);
+      return widget.action(monitor, actionKey, settings);
     }),
   );
 

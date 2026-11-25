@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
 import { buildDevice } from '../src/devices.js';
 import { WIDGET_KEY } from '../src/monitor.js';
+import { report } from '../src/report.js';
 import { WIDGET_ACTION } from '../src/widgets.js';
 import { FIXTURES, createService, createWorld } from './helpers/world.js';
 
@@ -101,12 +102,16 @@ test('the widget settings hide the server and the button, show the IP', async (t
 test('the widget before any answer, and during an outage', async (t) => {
   const w = await createWorld({ service: createService('down') });
   t.after(() => w.app.stop());
+  await w.monitor.check().catch(() => {});
   let data = (await w.fake.widgetGet(WIDGET_KEY, { settings: {}, language: 'en' })).data.content;
   assert.deepEqual(validateWidgetContent(data), []);
   assert.match(data.components[0].text, /cannot be reached/);
   w.service.answer = FIXTURES.notThrough;
   await w.monitor.check();
   w.service.answer = 'down';
+  await w.monitor.check().catch(() => {});
+  data = (await w.fake.widgetGet(WIDGET_KEY, { settings: {}, language: 'es' })).data.content;
+  assert.ok(!JSON.stringify(data).includes('Comprobación fallida'), 'one failure is not an outage');
   await w.monitor.check().catch(() => {});
   data = (await w.fake.widgetGet(WIDGET_KEY, { settings: {}, language: 'es' })).data.content;
   assert.deepEqual(validateWidgetContent(data), []);
@@ -124,4 +129,34 @@ test('the widget button checks, and fails in red', async (t) => {
   ack = await w.fake.widgetAction(WIDGET_KEY, WIDGET_ACTION.CHECK, {}, { settings: {} });
   assert.equal(ack.success, false);
   assert.match(ack.error.fr, /15 s/);
+});
+
+test('the widget button keeps the IP hidden unless the widget shows it', async (t) => {
+  const w = await createWorld();
+  t.after(() => w.app.stop());
+  let ack = await w.fake.widgetAction(WIDGET_KEY, WIDGET_ACTION.CHECK, {}, { settings: {} });
+  assert.ok(!JSON.stringify(ack.data).includes('192.0.2.23'));
+  assert.match(ack.data.message.en, /\(Stockholm, Sweden\)\. On no blacklist\.$/);
+  const settings = { show_ip: true };
+  ack = await w.fake.widgetAction(WIDGET_KEY, WIDGET_ACTION.CHECK, {}, { settings });
+  assert.match(ack.data.message.en, /IP 192\.0\.2\.23\./);
+});
+
+test('the longest report still fits in a 200-character toast', () => {
+  const long = 'x'.repeat(80);
+  const status = {
+    through: false,
+    ip: '2001:db8:ffff:ffff:ffff:ffff:ffff:ffff',
+    country: long,
+    city: long,
+    organization: long,
+    blacklisted: true,
+    lists: [long, long, long],
+  };
+  for (const through of [false, true]) {
+    const message = report({ ...status, through, server: long, serverType: long });
+    for (const [lang, text] of Object.entries(message)) {
+      assert.ok(text.length <= 200, `${lang}: ${text.length}`);
+    }
+  }
 });

@@ -97,16 +97,16 @@ export const INIT_FAILED = {
 /** The messages of the "Check now" button (Configuration screen, widget). */
 export const REPORT_TEXT = {
   through: {
-    en: 'Through Mullvad: yes, server {server} ({place}). IP {ip}. {listed}',
-    fr: 'Via Mullvad : oui, serveur {server} ({place}). IP {ip}. {listed}',
-    de: 'Über Mullvad: ja, Server {server} ({place}). IP {ip}. {listed}',
-    es: 'A través de Mullvad: sí, servidor {server} ({place}). IP {ip}. {listed}',
+    en: 'Through Mullvad: yes, server {server} ({place}).{ip} {listed}',
+    fr: 'Via Mullvad : oui, serveur {server} ({place}).{ip} {listed}',
+    de: 'Über Mullvad: ja, Server {server} ({place}).{ip} {listed}',
+    es: 'A través de Mullvad: sí, servidor {server} ({place}).{ip} {listed}',
   },
   notThrough: {
-    en: 'Through Mullvad: NO. Exit {place}, provider {organization}, IP {ip}. {listed}',
-    fr: 'Via Mullvad : NON. Sortie {place}, fournisseur {organization}, IP {ip}. {listed}',
-    de: 'Über Mullvad: NEIN. Ausgang {place}, Anbieter {organization}, IP {ip}. {listed}',
-    es: 'A través de Mullvad: NO. Salida {place}, proveedor {organization}, IP {ip}. {listed}',
+    en: 'Through Mullvad: NO. Exit {place}, provider {organization}.{ip} {listed}',
+    fr: 'Via Mullvad : NON. Sortie {place}, fournisseur {organization}.{ip} {listed}',
+    de: 'Über Mullvad: NEIN. Ausgang {place}, Anbieter {organization}.{ip} {listed}',
+    es: 'A través de Mullvad: NO. Salida {place}, proveedor {organization}.{ip} {listed}',
   },
   clean: {
     en: 'On no blacklist.',
