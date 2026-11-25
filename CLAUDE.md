@@ -31,18 +31,38 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: registerHandlers + connect()
+src/app.js                        every SDK handler (actions, scene action, widget, lifecycle)
+src/monitor.js                    check loop: own timer, states, scene triggers, status
+src/mullvad.js                    client of https://am.i.mullvad.net/json (typed errors)
+src/devices.js                    the single device (3 read-only features) + states
+src/report.js                     "Check now" message (returned) / failure (thrown)
+src/widgets.js                    dashboard widget `connection`
+src/texts.js                      every text in en/fr/de/es, ActionFailure
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+gladys-assistant-integration.json manifest
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys
+test/                             node --test, SDK fake Gladys + fake am.i.mullvad.net (test/helpers/world.js)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
+
+## Mullvad specifics
+
+- `GET https://am.i.mullvad.net/json`, no key: `ip`, `country`, `city`, `organization`, `mullvad_exit_ip`
+  (boolean), and when true `mullvad_exit_ip_hostname`, `mullvad_server_type`; `blacklisted.blacklisted` and
+  `blacklisted.results[]` (`name`, `link`, `blacklisted`). `city` can be `null` (seen on a French home connection).
+  No published quota: interval bounded to 1–60 min (select, 5 by default).
+- Only the container's own traffic is checked: it answers for the house only when the VPN runs on the router or on
+  the Gladys host.
+- Privacy: the IP and the server are never features (no history of the IP) nor logged; the IP shows in the action
+  message and, opt-in, in the widget.
+- A failed check is retried after 30 s; the second failure in a row is the outage (one log line, red status,
+  `check_failed` once). States keep their last value during an outage. The first check after a start fires no
+  trigger.
+- The scene action returns `success: false` instead of throwing: a scene must be able to branch on a blocked check
+  (kill switch).
+- `test/fixtures/mullvad/not-through.json` is a real answer (anonymized); the "through" answers are rebuilt from the
+  documented format (see the README of that folder).
 
 ## Rules
 

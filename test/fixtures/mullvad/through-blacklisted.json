@@ -1,0 +1,18 @@
+{
+  "ip": "192.0.2.77",
+  "country": "Germany",
+  "city": "Frankfurt",
+  "longitude": 8.6842,
+  "latitude": 50.1155,
+  "mullvad_exit_ip": true,
+  "mullvad_exit_ip_hostname": "de-fra-wg-005",
+  "mullvad_server_type": "WireGuard",
+  "blacklisted": {
+    "blacklisted": true,
+    "results": [
+      { "name": "spamhaus.org", "link": "https://check.spamhaus.org/", "blacklisted": true },
+      { "name": "example-list", "link": "https://example.org/", "blacklisted": false }
+    ]
+  },
+  "organization": "M247"
+}

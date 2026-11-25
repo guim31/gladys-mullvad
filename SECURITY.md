@@ -30,6 +30,11 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration stores nothing in `/data` and handles no secret: it only sends an anonymous HTTPS request to
+`https://am.i.mullvad.net/json` (Mullvad's public connection check) and keeps the answer in memory. The public IP
+of the house is never written to the logs nor published as a feature state; it is shown only in the action message
+and, if the user enables it, in the dashboard widget.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and the Mullvad service the integration talks to.
